@@ -1,22 +1,27 @@
 require 'csv'
-slcsp_rows = Array.new
 
+puts "Processing file..."
+
+slcsp_rows = Array.new
+# Find slcsps
 CSV.foreach('slcsp.csv', headers:true) do |slcsp_row|
-  rate_areas = Array.new
+  potential_rate_areas = Array.new
+  rate_area = nil
+
    CSV.foreach('zips.csv', headers:true) do |zips_row|
      if zips_row['zipcode'] == slcsp_row['zipcode']
-       rate_areas << zips_row['rate_area']
+       potential_rate_areas << zips_row['rate_area']
      end
    end
 
-   if rate_areas.length > 1
-     rate_areas.each do |area|
-       if rate_areas != nil and area != rate_areas.first
-         rate_areas = nil
+   if potential_rate_areas.length > 1
+     potential_rate_areas.each do |area|
+       if potential_rate_areas != nil and area != potential_rate_areas.first
+         potential_rate_areas = nil
        end
      end
-   elsif rate_areas != nil
-    rate_area = rate_areas.first
+   elsif potential_rate_areas != nil and potential_rate_areas.length == 1
+    rate_area = potential_rate_areas.first
    end
 
    rates = Array.new
@@ -25,14 +30,14 @@ CSV.foreach('slcsp.csv', headers:true) do |slcsp_row|
        rates << plans_row['rate']
      end
    end
-  slcsp_row['rate'] = rates.sort[1]
+
+  slcsp_row['rate'] = rates.sort.uniq[1] if rates.uniq.length > 1
   slcsp_rows << slcsp_row
 end
-
-puts slcsp_rows
-# CSV.open('sample3.csv', 'wb') { |csv| rows_array.each{|row| csv << row}}
-CSV.open('slcsp_test.csv', 'wb', :write_headers=> true, :headers => ["zipcode", "rate"]) do |file|
+# Build file
+CSV.open('slcsp_solution.csv', 'wb', :write_headers=> true, :headers => ["zipcode", "rate"]) do |file|
   slcsp_rows.each do |row|
     file << row
   end
 end
+puts "Processing complete!"
